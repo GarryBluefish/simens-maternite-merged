@@ -1,0 +1,44 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script type="text/javascript">
+  window.onload = function () {
+    var chart = new CanvasJS.Chart("chartContainer",
+    {
+      title:{
+      text: "Line Chart with Null Data Point"  //**Change the title here
+      },
+      axisX: {
+			interval: 1
+		},
+      data: [
+      {
+        type: "line",
+        dataPoints: [
+        { x: 0, y: 4 },
+        { x: 6, y: 10 },
+        { x: 4, y: null }, 
+        { x: 0, y: 4 },
+        { x: 2, y: 7 },
+        { x: 6, y: 8 },
+        { x: 7, y: 8.5 },
+        { x: 9, y: 9 },
+        { x: 0, y: null },
+        { x: 5, y: 4 },
+        { x: 10, y: 10 }
+        ]
+      }
+      ]
+    });
+
+    chart.render();
+  }
+	</script>
+	<script src="../../canvasjs.min.js"></script>
+	<title>CanvasJS Example</title>
+</head>
+<body>
+	<div id="chartContainer" style="height: 400px; width: 100%;">
+	</div>
+</body>
+</html>

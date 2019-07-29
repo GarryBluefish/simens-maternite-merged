@@ -24,7 +24,11 @@ use Maternite\View\Helpers\GeneralPdf;
 use Maternite\View\Helpers\ProtocoleOperatoirePdf;
 use Maternite\View\Helpers\TraitementChirurgicalPdf;
 use Maternite\View\Helpers\TraitementInstrumentalPdf;
+use Maternite\View\Helpers\infosStatistiquePdf;
+use Maternite\View\Helpers\infosStatistiquePathologiePdf;
+use Maternite\View\Helpers\infosStatistiqueDecesPdf;
 use Maternite\View\Helpers\RendezVousPdf;
+
 use Maternite\View\Helpers\TransfertPdf;
 use Maternite\View\Helpers\HospitalisationPdf;
 use Maternite\View\Helpers\SuiteDeCouchePdf;
@@ -78,8 +82,7 @@ class AccouchementController extends AbstractActionController
     protected $demandeActeTable;
     protected $admissionTable;
     protected $antecedenttype1Table;
-   protected $antecedenttype2Table;
-    
+    protected $antecedenttype2Table;
    protected  $tableGateway;
   //recuperer la table patient  
 	public function getPatientTable() {
@@ -88,6 +91,15 @@ class AccouchementController extends AbstractActionController
 			$this->patientTable = $sm->get ( 'Maternite\Model\PatientTable' );
 		}
 		return $this->patientTable;
+	}
+	
+	public function getConclusionTable()
+	{
+		if (!$this->conclusionTable) {
+			$sm = $this->getServiceLocator();
+			$this->conclusionTable = $sm->get('Maternite\Model\ConclusionTable');
+		}
+		return $this->conclusionTable;
 	}
 	
 	public function getAdmissionTable() {
@@ -510,7 +522,7 @@ public function getAccouchementTable() {
 	
 				$donnees['PHOTO'] = $nomfile;
 				//ENREGISTREMENT DE LA PHOTO
-				imagejpeg ( $img, 'C:\wamp64\www\simens-maternite\public\img\photos_patients\\' . $nomfile . '.jpg' );
+				imagejpeg ( $img, '.\img\photos_patients\\' . $nomfile . '.jpg' );
 				//ENREGISTREMENT DES DONNEES
 			
 				$Patient->addPatient ( $donnees , $date_enregistrement , $id_employe );
@@ -558,8 +570,6 @@ public function getAccouchementTable() {
 		return $view;
 	}
 
-	
-	
 public function listePatientAjaxAction() {
 		
 		$output = $this->getPatientTable()->getListePatient();
@@ -580,7 +590,6 @@ public function listePatientAjaxAction() {
 		return array (
 				'lesdetails' => $unPatient,
 				'image' => $patient->getPhoto ( $id_pat ),
-				//'id_patient' => $unPatient['ID_PERSONNE'],
 				'date_enregistrement' => $unPatient['DATE_ENREGISTREMENT']
 		);
 	}
@@ -916,9 +925,9 @@ public function listePatientAjaxAction() {
 				$ancienneImage = $lePatient['PHOTO'];
 	
 				if($ancienneImage) {
-					unlink ( 'C:\wamp64\www\simens\public\img\photos_patients\\' . $ancienneImage . '.jpg' );
+					unlink ( '.\img\photos_patients\\' . $ancienneImage . '.jpg' );
 				}
-				imagejpeg ( $img, 'C:\wamp64\www\simens\public\img\photos_patients\\' . $nomfile . '.jpg' );
+				imagejpeg ( $img, '.\img\photos_patients\\' . $nomfile . '.jpg' );
 	
 				$donnees['PHOTO'] = $nomfile;
 				$Patient->updatePatient ( $donnees , $id_patient, $date_modification, $id_employe);
@@ -1222,10 +1231,6 @@ public function declarerDecesAction() {
        	
        );
 	}
-
-
-	
-	
 	
 	public function listeDesAccouchementsAction() {
 		
@@ -1247,9 +1252,7 @@ public function declarerDecesAction() {
 				'enableJsonExprFinder' => true
 		) ) );
 	}
-	
-	
-	
+
 	
 	public function complementAccouchementAction()
 	{
@@ -1398,7 +1401,7 @@ foreach ($Nouveau as $Nv){
 				'mort_ne'=>$donne_ante['mort_ne'],
 				'note_mort_ne'=>$donne_ante['note_mort_ne'],
 				'cesar'=>$donne_ante['cesar'],
-				'note_cesar'=>$donne_ante['note_cesar'],
+				//'note_cesar'=>$donne_ante['note_cesar'],
 				'groupe_sanguins'=>$donne_ante['groupe_sanguin'],
 				'rhesus'=>$donne_ante['rhesus'],
 				'note_gs'=>$donne_ante['note_gs'],
@@ -1860,6 +1863,7 @@ foreach ($Nouveau as $Nv){
 			
 		$html .= "<div style='width: 12%; height: 180px; float:left; '>";
 
+		
 		$html .= "</div>";
 			
 		$html .= "</div>";
@@ -1895,7 +1899,7 @@ foreach ($Nouveau as $Nv){
                   setInterval('FaireClignoterImage()',2200);
 	
 				  $('#button_pdf').click(function(){
-				     vart='/simens/public/facturation/impression-facture';
+				     vart='./facturation/impression-facture';
 				     var formulaire = document.createElement('form');
 			         formulaire.setAttribute('action', vart);
 			         formulaire.setAttribute('method', 'POST');
@@ -1957,15 +1961,11 @@ foreach ($Nouveau as $Nv){
         $id_patient = $this->params()->fromPost('id_patient');
         $form = new ConsultationForm ();
         $formData = $this->getRequest()->getPost();
-        
-        //var_dump($formData);exit();
-        
         $form->setData($formData);
         $id_admission = $this->params()->fromPost('id_admission');
         $user = $this->layout()->user;
         $IdDuService = $user ['IdService'];
         $id_medecin = $user ['id_personne'];
-      
         // **********-- MODIFICATION DES CONSTANTES --********
         // **********-- MODIFICATION DES CONSTANTES --********
         // **********-- MODIFICATION DES CONSTANTES --********
@@ -1978,7 +1978,7 @@ foreach ($Nouveau as $Nv){
       
       
         $this->getConsultationTable()->updateConsultation($form);
-       
+        
         // Recuperer les donnees sur les bandelettes urinaires
         // Recuperer les donnees sur les bandelettes urinaires
         $bandelettes = array(
@@ -1990,38 +1990,39 @@ foreach ($Nouveau as $Nv){
             'croixsucre' => $this->params()->fromPost('croixsucre'),
             'croixcorpscetonique' => $this->params()->fromPost('croixcorpscetonique')
         );
-      
         // mettre a jour les bandelettes urinaires
         $this->getConsultationTable()->deleteBandelette($id_cons);
         $this->getConsultationTable()->addBandelette($bandelettes);
-       // var_dump('tset');exit();
+       //var_dump('tset');exit();
         
-       // $id_grossesse= $this->getGrossesseTable()->updateGrossesse($formData);
+        //$id_grossesse= $this->getGrossesseTable()->updateGrossesse($formData);
         
        // $this->getGrossesseTable()->updateAvortement($formData,$id_cons,$id_grossesse);
         //$this->getConsultationMaterniteTable()->addConsultationMaternite($id_cons,$id_grossesse);
        
-        $id_antecedent1 = $this->getAntecedentType1Table ()-> updateAntecedentType1($formData); 
-    $id_antecedent2 = $this->getAntecedentType2Table ()-> updateAntecedentType2($formData);
+        //$id_antecedent1 = $this->getAntecedentType1Table ()-> updateAntecedentType1($formData);         
+        
+   // $id_antecegetAntecedentType2Table ()-> updateAntecedentType2($formData);
     $this->getDonneesExamensPhysiquesTable()->updateExamenPhysique($formData);//var_dump('test');exit(); 
+    
+   $id_acc= $this->getAccouchementTable()->updateAccouchement($formData,$id_cons); //var_dump('test');exit(); 
   
-   $id_acc= $this->getAccouchementTable()->updateAccouchement($formData,$id_cons);  //var_dump('test');exit();
-  $this->getAccouchementTable()->addPrenomme($formData['prenome'],$id_acc);
+   $this->getAccouchementTable()->addPrenomme($formData['prenome'],$id_acc);    
+   
     // var_dump($formData['prenome']); exit();
         $enfant=$formData['nombre_enfant'];
-       	//$tab_bebes = $this->getNaissanceTable()->saveNaissance($formData,$id_cons,$id_patient,$id_grossesse);
+       	$tab_bebes = $this->getNaissanceTable()->saveNaissance($formData,$id_cons,$id_patient);
        	//var_dump(count($tab_bebes));exit();
-       	//$this->getDevenirNouveauNeTable()->saveNouveauNe($formData, $id_cons, $tab_bebes);      	
-       // var_dump($formData);exit;
+       	$this->getDevenirNouveauNeTable()->saveNouveauNe($formData, $id_cons, $tab_bebes);      	
        
         //Nouveau ne
     //var_dump('tse');exit();
       //pour les conclusion: complication et deces maternel
       $nombre_cause = $this->params()->fromPost('nb_comp');
       $nombre_causeDC = $this->params()->fromPost('nbcauseDC');
-      //$this->conclusionTable()->updateConclusionComp($formData, $id_cons,$nombre_cause,$id_patient);
-      //$this->conclusionTable()->updateConclusionDeces($formData, $id_cons,$nombre_causeDC,$id_patient);
-//var_dump('test');exit();
+      $this->conclusionTable()->updateConclusionComp($formData, $id_cons,$nombre_cause,$id_patient);
+      $this->conclusionTable()->updateConclusionDeces($formData, $id_cons,$nombre_causeDC,$id_patient);
+        
         // POUR LES ANTECEDENTS ANTECEDENTS ANTECEDENTS
         // POUR LES ANTECEDENTS ANTECEDENTS ANTECEDENTS
         // POUR LES ANTECEDENTS ANTECEDENTS ANTECEDENTS
@@ -2064,7 +2065,7 @@ foreach ($Nouveau as $Nv){
             
         );
 //var_dump($donneesDesAntecedents);exit();
-       
+        
         $id_personne = $this->getAntecedantPersonnelTable()->getIdPersonneParIdCons($id_cons);
         $this->getAntecedantPersonnelTable()->addAntecedentsPersonnels($donneesDesAntecedents, $id_personne, $id_medecin);
         $this->getAntecedantsFamiliauxTable()->addAntecedentsFamiliaux($donneesDesAntecedents, $id_personne, $id_medecin);
@@ -2096,8 +2097,8 @@ foreach ($Nouveau as $Nv){
         		'5' => $this->params()->fromPost('bilan_renal'),
         		'6' => $this->params()->fromPost('bilan_inflammatoire')
         );
-       // var_dump($info_examen_biologique);exit();
-        //$this->getNotesExamensBiologiqueTable()->updateNotesExamensBiologiques($info_examen_biologique);
+        //var_dump($info_examen_biologique);exit();
+        //$this->getNotesExamensBiologiqueTable()->updateNotesExamensBiologiques($formData);
         
         // POUR LES DIAGNOSTICS
         // POUR LES DIAGNOSTICS
@@ -2185,7 +2186,7 @@ foreach ($Nouveau as $Nv){
             'ID_CONS' => $id_cons
         );
 
-       // $this->getDemandeVisitePreanesthesiqueTable()->updateDemandeVisitePreanesthesique($infoDemande);
+        $this->getDemandeVisitePreanesthesiqueTable()->updateDemandeVisitePreanesthesique($formData);
 
         // POUR LES COMPTES RENDU DES TRAITEMENTS
         // POUR LES COMPTES RENDU DES TRAITEMENTS
@@ -2249,7 +2250,7 @@ foreach ($Nouveau as $Nv){
                 'VALIDER' => 1,
                 'ID_CONS' => $id_cons,
                 'ID_MEDECIN' => $this->params()->fromPost('med_id_personne')
-            );
+            );//var_dump($valide);exit();
             $this->getConsultationTable()->validerConsultation($valide);
            
         }
@@ -3213,6 +3214,54 @@ public function getStatistiqueSurveillanceAccouchementAction (){
 	return $this->getResponse ()->setContent ( Json::encode (array($html,$infoPeriodeRapport) ));
 	
 } 
+public function getStatistiqueMaternelAction(){
+	$date_debut = $this->params()->fromPost ('date_debut');
+	$date_fin   = $this->params()->fromPost ('date_fin');
+	$control = new DateHelper();
+	$infoPeriodeRapport ="Rapport du ".$control->convertDate($date_debut)." au ".$control->convertDate($date_fin);
+    $post=$this->getAccouchementTable()->getNbDecesMaternelPortPartum($date_debut, $date_fin);
+    $ant=$this->getAccouchementTable()->getNbDecesMaternelAntePartum($date_debut, $date_fin);
+    $dystocie=$this->getAccouchementTable()->getNbDecesMaternelDystocie($date_debut, $date_fin);
+    $hyper=$this->getAccouchementTable()->getNbDecesMaternelHypertension($date_debut, $date_fin);
+    $inf=$this->getAccouchementTable()->getNbDecesMaternelInfection($date_debut, $date_fin);
+    $direct=$this->getAccouchementTable()->getNbDecesMaternelDirect($date_debut, $date_fin);
+    $indirect=$this->getAccouchementTable()->getNbDecesMaternelIndirect($date_debut, $date_fin);
+    $indeterminer=$this->getAccouchementTable()->getNbDecesMaternelIndtermine($date_debut, $date_fin);
+    
+    $html1="<script> $('#nbHemoregiejax').html(".$post.");</script>";
+    $html2="<script> $('#nbHemoregie1jax').html(".$ant.");</script>";
+    $html3="<script> $('#DystocieAjax').html(".$dystocie.");</script>";
+    $html4="<script> $('#HypertensionAjax').html(".$hyper.");</script>";
+    $html5="<script> $('#InfectionAjax').html(".$inf.");</script>";
+    $html6="<script> $('#DirectAjax').html(".$direct.");</script>";
+    $html7="<script> $('#indirectAjax').html(".$indirect.");</script>";
+    $html8="<script> $('#indetermine').html(".$indeterminer.");</script>";
+    $html9  ='<script>';
+    	
+    $html9 .= "
+    
+				    	$(document).ready(function($) {
+				    		var chart = new CanvasJS.Chart('patientConsulte', {
+    
+				    			data: [{
+				    				type: 'pie',
+				    				dataPoints: [
+    
+				    				{ y: ".$post.", label: 'Feminin' },
+				    				{ y: ".$dystocie.", label: 'Masculin' },
+				    				]
+				    			}]
+				    		});
+    
+				    		chart.render();
+				    });";
+    $html9 .="</script> ";
+ 
+
+	$this->getResponse ()->getHeaders ()->addHeaderLine ( 'Content-Type', 'application/html; charset=utf-8' );
+	return $this->getResponse ()->setContent ( Json::encode (array($infoPeriodeRapport,$html1,$html2,$html3,$html4,$html5,$html6,$html7,$html8,$html9)) );
+
+}
 public function getStatistiquePathologieAction(){
 	$date_debut = $this->params()->fromPost ('date_debut');
 	$date_fin   = $this->params()->fromPost ('date_fin');
@@ -3668,7 +3717,8 @@ public function getStatistiqueSurveillanceGrossesseAction(){
   	//var_dump($this);exit();
   	$this->layout ()->setTemplate ( 'layout/accouchement' );
   	$id_cons = $this->params()->fromPost('id_cons');
-  	 
+  	//$listeSousDossier = $this->getConsultationTable()->getInfosSousDossier();
+  	 //var_dump($listeSousDossier);exit();
   	$formStatistique = new StatistiqueForm();
   	$nbPatientPost=$this->getConsultationTable()->getNbPatientsPost();
   	$nbPatientPre = $this->getConsultationTable()->getNbPatientsPre();
@@ -3678,19 +3728,22 @@ public function getStatistiqueSurveillanceGrossesseAction(){
   	$nbPatientAccou  = $this->getConsultationTable()->getNbPatientsAcc();
   
   	$nbPatientPost=$this->getConsultationTable()->getNbPatientsPost();
-  	//$nbinf=$this->getGrossesseTable()->getNbNaissanePrematureMascSimpleEutocique('2019-01-01','2019-04-01');
-   // var_dump($nbinf);exit();
+  	//$ant=$this->getAccouchementTable()->getNbDecesMaternelAntePartum('2017-01-01','2019-07-15');
+  	 
+  	//$nbpat=$this->getAccouchementTable()->getNbDecesMaternelPortPartum('2017-01-01','2019-07-15');
+    //var_dump($nbpat);exit();
   	$nbPatientAccou  = $this->getConsultationTable()->getNbPatientsAcc();    //var_dump($nbPatientAccou);exit();
  
   	$nbPatientPre = $this->getConsultationTable()->getNbPatientsPre();
   	$nbPatientPla= $this->getConsultationTable()->getNbPatientsPla();
   	
- 
+  	$listeSousDossier=$this->getConsultationTable()->getInfosSousDossier();
+  	 
   	$nbGrossesseGemellaire=$this->getGrossesseTable()->getNbGrossesseGemellaire();
   	
   
   	return array (
-  			 
+  			 'listeSousDossier'=>$listeSousDossier,
   			'formStatistique' => $formStatistique,
   			'nbPatientPost'  => $nbPatientPost,
   			'nbPatientPre' => $nbPatientPre,
@@ -3698,7 +3751,6 @@ public function getStatistiqueSurveillanceGrossesseAction(){
   			'nbPatientAcc'   => $nbPatientAccou,
   			'$nbPatientAccou'=>$nbPatientAccou,
   			'nbPatientGyneco'=>$nbPatientGyneco,
-  			
   			'nbGrossesseGemellaire' => $nbGrossesseGemellaire,
   	);
   }
@@ -3713,6 +3765,172 @@ public function getStatistiqueSurveillanceGrossesseAction(){
   	 
   	 
   	
+  }
+ /*  public function statistiquesGeneralImprimeesAction(){
+  	$control = new DateHelper();
+  	
+  	$id_service = (int) $this->params()->fromPost ('id_service');
+  	//$id_diagnostic = (int) $this->params()->fromPost ('id_diagnostic');
+  	$date_debut = $this->params()->fromPost ('date_debut');
+  	$date_fin   = $this->params()->fromPost ('date_fin');
+  	
+  	$periodeIntervention = array();
+  	
+  	$listeSousDossier = $this->getConsultationTable()->getInfosSousDossier();
+  	
+  	$user = $this->layout()->user;
+  	$nomService = $user['NomService'];
+  	$infosComp['dateImpression'] = (new \DateTime ())->format( 'd/m/Y' );
+  	
+  	$pdf = new infosStatistiquePdf();
+  	$pdf->SetMargins(13.5,13.5,13.5);
+  	$pdf->setTabInformations($listeSousDossier);
+  	 
+  	$pdf->setService($nomService);
+  	$pdf->setInfosComp($infosComp);
+  	//$pdf->setPeriodeIntervention($periodeIntervention);
+  	
+  	$pdf->ImpressionInfosStatistiques();
+  	$pdf->Output('I');
+  	
+  } */
+  public function statistiquesImprimeesAction() {
+  
+  	$control = new DateHelper();
+  
+  	$id_service = (int) $this->params()->fromPost ('id_service');
+  	//$id_diagnostic = (int) $this->params()->fromPost ('id_diagnostic');
+  	$date_debut = $this->params()->fromPost ('date_debut');
+  	$date_fin   = $this->params()->fromPost ('date_fin');
+  
+  	$periodeIntervention = array();
+  
+  $listeSousDossier=$this->getConsultationTable()->getInfosSousDossier();
+  //var_dump($listeSousDossier);exit();
+  	$user = $this->layout()->user;
+  	$nomService = $user['NomService'];
+  	$infosComp['dateImpression'] = (new \DateTime ())->format( 'd/m/Y' );
+  
+  	$pdf = new infosStatistiquePdf();
+  	$pdf->SetMargins(13.5,13.5,13.5);
+  	$pdf->setTabInformations($listeSousDossier);
+  	
+		$pdf->setNomService($nomService);
+  	  	$pdf->setInfosComp($infosComp);
+  
+  	$pdf->ImpressionInfosStatistiques();
+  	$pdf->Output('I');
+  
+  }
+  public function statistiquesDecesImprimeesAction(){
+  	 
+  	$date_debut = $this->params()->fromPost ('date_debut');
+  	$date_fin   = $this->params()->fromPost ('date_fin');
+  	$periodeStat = array();
+  	if($date_debut && $date_fin){ /*Une période est selectionnée*/
+  		 
+  		/**=======================*/
+  		$periodeStat[0] = $date_debut;
+  		$periodeStat[1] = $date_fin;
+  		
+  		$post=$this->getAccouchementTable()->getNbDecesMaternelPortPartum($date_debut, $date_fin);
+  		$ant=$this->getAccouchementTable()->getNbDecesMaternelAntePartum($date_debut, $date_fin);
+  		$dystocie=$this->getAccouchementTable()->getNbDecesMaternelDystocie($date_debut, $date_fin);
+  		$hyper=$this->getAccouchementTable()->getNbDecesMaternelHypertension($date_debut, $date_fin);
+  		$inf=$this->getAccouchementTable()->getNbDecesMaternelInfection($date_debut, $date_fin);
+  		$direct=$this->getAccouchementTable()->getNbDecesMaternelDirect($date_debut, $date_fin);
+  		$indirect=$this->getAccouchementTable()->getNbDecesMaternelIndirect($date_debut, $date_fin);
+  		$indeterminer=$this->getAccouchementTable()->getNbDecesMaternelIndtermine($date_debut, $date_fin);
+  	}else{
+  		$post=$this->getAccouchementTable()->getNbDecesMaternelPortPartum($date_debut, $date_fin);
+  		$ant=$this->getAccouchementTable()->getNbDecesMaternelAntePartum($date_debut, $date_fin);
+  		$dystocie=$this->getAccouchementTable()->getNbDecesMaternelDystocie($date_debut, $date_fin);
+  		$hyper=$this->getAccouchementTable()->getNbDecesMaternelHypertension($date_debut, $date_fin);
+  		$inf=$this->getAccouchementTable()->getNbDecesMaternelInfection($date_debut, $date_fin);
+  		$direct=$this->getAccouchementTable()->getNbDecesMaternelDirect($date_debut, $date_fin);
+  		$indirect=$this->getAccouchementTable()->getNbDecesMaternelIndirect($date_debut, $date_fin);
+  		$indeterminer=$this->getAccouchementTable()->getNbDecesMaternelIndtermine($date_debut, $date_fin);}
+  		
+  	$user = $this->layout()->user;
+  	$nomService = $user['NomService'];
+  	 
+  	$infosComp['dateImpression'] = (new \DateTime ())->format( 'd/m/Y' );//var_dump($date_fin);exit();
+  	$pdf = new infosStatistiqueDecesPdf();  	
+  	
+  	$pdf->SetMargins(13.5,13.5,13.5);
+  	//$pdf->setTabInformations($liste);
+  	$pdf->setNombrepost($post);
+  	$pdf->setNombreant($ant);
+  	$pdf->setNombredystociee($dystocie);
+  	$pdf->setNombrehyper($hyper);
+  	$pdf->setNombreinf($inf);
+  	$pdf->setNombredirect($direct);
+  	$pdf->setNombreindirect($indirect);
+  	$pdf->setNombreindeterminer($indeterminer);
+  	$pdf->setNomService($nomService);
+  	$pdf->setInfosComp($infosComp);
+  	$pdf->setPeriode($periodeStat);//var_dump($date_fin);exit();
+  	
+  	$pdf->ImpressionInfosStatistiques();
+  	$pdf->Output('I');
+  }
+  public function statistiquesPathologiesImprimeesAction()
+  {
+  	$date_debut = $this->params()->fromPost ('date_debut');
+	$date_fin   = $this->params()->fromPost ('date_fin');
+	
+  	$periodeStat = array();
+  	if($date_debut && $date_fin){ /*Une période est selectionnée*/
+  	
+  		/**=======================*/
+  		$periodeStat[0] = $date_debut;
+  		$periodeStat[1] = $date_fin;
+  		
+  		$hrp=$this->getAccouchementTable()->getNbhrp($date_debut,$date_fin);
+  		$hpp=$this->getAccouchementTable()->getNbhpp($date_debut, $date_fin);
+  		$anemie=$this->getAccouchementTable()->getNbanemie($date_debut, $date_fin);
+  		$fistules=$this->getAccouchementTable()->getNbFistules($date_debut, $date_fin);
+  		$paludisme=$this->getAccouchementTable()->getNbPaludisme($date_debut, $date_fin);
+  		$ru=$this->getAccouchementTable()->getNbRU($date_debut,$date_fin);
+  		$eclapsie=$this->getAccouchementTable()->getNbEclapsie($date_debut, $date_fin);
+  		$dystocie=$this->getAccouchementTable()->getNbDystocie($date_debut, $date_fin);
+  		$liste = array($hrp,$hpp,$anemie,$fistules,$paludisme,$ru,$eclapsie,$dystocie);//var_dump($liste);exit();
+  	}else {
+  		$hrp=$this->getAccouchementTable()->getNbhrp($date_debut,$date_fin);
+  		$hpp=$this->getAccouchementTable()->getNbhpp($date_debut, $date_fin);
+  		$anemie=$this->getAccouchementTable()->getNbanemie($date_debut, $date_fin);
+  		$fistules=$this->getAccouchementTable()->getNbFistules($date_debut, $date_fin);
+  		$paludisme=$this->getAccouchementTable()->getNbPaludisme($date_debut, $date_fin);
+  		$ru=$this->getAccouchementTable()->getNbRU($date_debut,$date_fin);
+  		$eclapsie=$this->getAccouchementTable()->getNbEclapsie($date_debut, $date_fin);
+  		$dystocie=$this->getAccouchementTable()->getNbDystocie($date_debut, $date_fin);
+  		//var_dump($dystocie);exit();
+  		$liste = array($hrp,$hpp,$anemie,$fistules,$paludisme,$ru,$eclapsie,$dystocie);
+  	}
+  	
+  	$user = $this->layout()->user;
+  	$nomService = $user['NomService'];  	
+  	
+  	$infosComp['dateImpression'] = (new \DateTime ())->format( 'd/m/Y' );
+  		
+  	$pdf = new infosStatistiquePathologiePdf();
+  	$pdf->SetMargins(13.5,13.5,13.5);
+  	//$pdf->setTabInformations($liste);
+  	$pdf->setNombrehrp($hrp);
+  	$pdf->setNombrehpp($hpp);
+  	$pdf->setNombreanemie($anemie);
+  	$pdf->setNombrefistule($fistules);
+  	$pdf->setNombrepaludisme($paludisme);
+  	$pdf->setNombreru($ru);
+  	$pdf->setNombreeclapsie($eclapsie);
+  	$pdf->setNombredystocie($dystocie);
+  	
+  	$pdf->setNomService($nomService);
+  	$pdf->setInfosComp($infosComp);
+  	$pdf->setPeriode($periodeStat);//var_dump($date_fin);exit();
+  		
+  	$pdf->ImpressionInfosStatistiques();
+  	$pdf->Output('I');
   }
     
  public function infoStatistiqueAction() {
@@ -3823,7 +4041,19 @@ public function getStatistiqueSurveillanceGrossesseAction(){
 				$decede=$this->getDevenirNouveauNeTable()->getNbMortNe($date_debut,$date_fin);
 				$reanimer=$this->getNaissanceTable()->getNbEnfantReanime($date_debut,$date_fin);
 				
-				$tabinfo=array($nbPatientAccou,$nbPatientAccCes,$nbPatientAccN,$nbPatientAccF,$nbcri,$nbinf,$enfviant,$nbPatientAccV,$nbPatientAccM,$nbGatPa,$decede,$reanimer);
+			}else {
+				$nbPatientAccou  = $this->getAccouchementTable()->getNbPatientsAcc($date_debut,$date_fin);
+				$nbPatientAccCes  =  $this->getAccouchementTable()->getNbPatientsAccCes($date_debut,$date_fin);
+				$nbPatientAccN  = $this->getAccouchementTable()->getNbPatientsAccN($date_debut,$date_fin);
+				$nbPatientAccF = $this->getAccouchementTable()->getNbPatientsAccF($date_debut,$date_fin);
+				$nbcri=$this->getNaissanceTable()->getNbEnfantNonCrier($date_debut,$date_fin);
+				$nbinf=$this->getNaissanceTable()->getNbEnfantPoidsInferieur($date_debut,$date_fin);
+				$enfviant=count($this->getNaissanceTable()->getEnf($date_debut,$date_fin));
+				$nbPatientAccV = $this->getAccouchementTable()->getNbPatientsAccV($date_debut,$date_fin);
+				$nbPatientAccM = $this->getAccouchementTable()->getNbPatientsAccM($date_debut,$date_fin);
+				$nbGatPa = $this->getAccouchementTable()->getNbPatientsAccGatPa($date_debut,$date_fin);
+				$decede=$this->getDevenirNouveauNeTable()->getNbMortNe($date_debut,$date_fin);
+				$reanimer=$this->getNaissanceTable()->getNbEnfantReanime($date_debut,$date_fin);
 				
 			}
 			$user = $this->layout()->user;
@@ -3831,8 +4061,18 @@ public function getStatistiqueSurveillanceGrossesseAction(){
 			$infosComp['dateImpression'] = (new \DateTime ())->format( 'd/m/Y' );
 			$pdf = new GeneralPdf();
 			$pdf->SetMargins(13.5,13.5,13.5);
-			$pdf->setTabInformations($tabinfo);
-				
+			$pdf->setNbPatientAccou($nbPatientAccou)	;
+			$pdf->setNbPatientAccCes($nbPatientAccCes);
+			$pdf->setNbPatientAccN($nbPatientAccN);
+			$pdf->setNbPatientAccM($nbPatientAccM);
+			$pdf->setNbPatientAccF($nbPatientAccF);
+			$pdf->setNbPatientAccV($nbPatientAccV);
+			$pdf->setNbcri($nbcri);
+			$pdf->setNbinf($nbinf);
+			$pdf->setEnfviant($enfviant);
+			$pdf->setNbGatPa($nbGatPa);
+			$pdf->setDecede($decede);
+			$pdf->setReanimer($reanimer);
 			$pdf->setNomService($nomService);
 			$pdf->setInfosComp($infosComp);
 			$pdf->setPeriodeDiagnostic($periodeDiagnostic);
@@ -3840,5 +4080,5 @@ public function getStatistiqueSurveillanceGrossesseAction(){
 			$pdf->Output('I');
     
     }
-    
+     
 }

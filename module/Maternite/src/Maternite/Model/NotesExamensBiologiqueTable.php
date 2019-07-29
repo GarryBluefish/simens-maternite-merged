@@ -70,7 +70,7 @@ class NotesExamensBiologiqueTable {
 						'id_cons' => $donnees ['id_cons'],
 						'id_examen' => $i,
 						'note' => $donnees [$i] 
-				);
+				);var_dump($dataNotesExamens);exit();
 				$this->tableGateway->insert ( $dataNotesExamens );
 			}
 		}

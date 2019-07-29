@@ -1500,7 +1500,7 @@ class ConsultationForm extends Form {
 		
 		$this->add ( array (
 				'name' => 'hauteurUterine',
-				'type' => 'Text',
+				'type' => 'Number',
 				'options' => array (
 						'label' => iconv ( 'ISO-8859-1', 'UTF-8', 'Hauteur uterine' )
 				),
@@ -2625,7 +2625,7 @@ class ConsultationForm extends Form {
 						'id' => 'antecedent_familial4' 
 				) 
 		) );
-		$this->add ( array (
+	$this->add ( array (
 				'name' => 'date_rv',
 				'type' => 'Text',
 				'options' => array (
